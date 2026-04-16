@@ -1,0 +1,25 @@
+replayer:
+  # Base URL of the system under test (refactored service)
+  target-base-url: http://localhost:8080
+  # Directory containing captured exchange JSON files
+  exchanges-directory: ./exchanges
+  # Fields excluded from JSON response comparison (matched by leaf key at any depth)
+  ignore-fields:
+    - id
+    - createdAt
+    - updatedAt
+    - timestamp
+    - correlationId
+  # Per-request timeout in seconds
+  request-timeout-seconds: 30
+  # Content-type detection strategy: "auto" | "json" | "xml"
+  content-type-detection: auto
+
+spring:
+  main:
+    web-application-type: none   # no web server — runs as CLI tool
+
+logging:
+  level:
+    root: WARN
+    com.werfen.masterlist.replayer: INFO

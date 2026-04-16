@@ -1,0 +1,20 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "capturedAt": "2026-04-16T10:00:00Z",
+  "request": {
+    "uri": "/api/v1/orders/123",
+    "method": "GET",
+    "headers": {
+      "Accept": "application/json",
+      "Authorization": "Bearer eyJhbGciOiJSUzI1NiJ9..."
+    },
+    "body": ""
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"id\":\"123\",\"status\":\"CONFIRMED\",\"createdAt\":\"2026-04-15T08:30:00Z\",\"lines\":[{\"id\":\"L1\",\"qty\":2,\"sku\":\"ABC-001\"}]}"
+  }
+}

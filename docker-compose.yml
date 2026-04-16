@@ -1,0 +1,36 @@
+version: '3.9'
+
+# This file is a starting point. Add the services your application depends on
+# (database, message broker, etc.) so both the recording and replay environments
+# can be started in an identical, reproducible state.
+#
+# Example: if your target service uses PostgreSQL, uncomment and configure below.
+
+services:
+
+  # Uncomment to add your target (refactored) service:
+  #
+  # refactored-service:
+  #   image: your-org/refactored-service:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/appdb
+  #   depends_on:
+  #     - db
+
+  # Uncomment to add a PostgreSQL database:
+  #
+  # db:
+  #   image: postgres:17
+  #   environment:
+  #     POSTGRES_DB: appdb
+  #     POSTGRES_USER: app
+  #     POSTGRES_PASSWORD: secret
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+
+# volumes:
+#   db-data:
