@@ -47,7 +47,7 @@ public class ResponseComparator {
 
         List<String> bodyDiffs = switch (type) {
             case JSON -> jsonComparator.compare(expectedBody, actualBody, properties.ignoreFields());
-            case XML  -> xmlComparator.compare(expectedBody, actualBody);
+            case XML  -> xmlComparator.compare(expectedBody, actualBody, properties.ignoreFields());
             case UNKNOWN -> compareRaw(expectedBody, actualBody);
         };
 
