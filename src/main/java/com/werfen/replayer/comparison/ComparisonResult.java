@@ -1,4 +1,4 @@
-package com.werfen.masterlist.replayer.comparison;
+package com.werfen.replayer.comparison;
 
 import java.util.List;
 

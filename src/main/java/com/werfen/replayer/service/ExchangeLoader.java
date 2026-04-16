@@ -1,8 +1,8 @@
-package com.werfen.masterlist.replayer.service;
+package com.werfen.replayer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.werfen.masterlist.replayer.config.ReplayerProperties;
-import com.werfen.masterlist.replayer.model.CapturedExchange;
+import com.werfen.replayer.config.ReplayerProperties;
+import com.werfen.replayer.model.CapturedExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

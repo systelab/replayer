@@ -1,4 +1,4 @@
-package com.werfen.masterlist.replayer.config;
+package com.werfen.replayer.config;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;

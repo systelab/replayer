@@ -1,4 +1,4 @@
-package com.werfen.masterlist.replayer.model;
+package com.werfen.replayer.model;
 
 import java.util.Map;
 

@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.werfen.masterlist</groupId>
+    <groupId>com.werfen</groupId>
     <artifactId>replayer</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>

@@ -22,4 +22,4 @@ spring:
 logging:
   level:
     root: WARN
-    com.werfen.masterlist.replayer: INFO
+    com.werfen.replayer: INFO

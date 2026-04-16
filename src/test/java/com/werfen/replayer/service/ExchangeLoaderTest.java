@@ -1,16 +1,15 @@
-package com.werfen.masterlist.replayer.service;
+package com.werfen.replayer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.werfen.masterlist.replayer.config.ReplayerProperties;
-import com.werfen.masterlist.replayer.model.CapturedExchange;
+import com.werfen.replayer.config.ReplayerProperties;
+import com.werfen.replayer.model.CapturedExchange;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;

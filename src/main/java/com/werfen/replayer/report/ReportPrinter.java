@@ -1,6 +1,6 @@
-package com.werfen.masterlist.replayer.report;
+package com.werfen.replayer.report;
 
-import com.werfen.masterlist.replayer.comparison.ComparisonResult;
+import com.werfen.replayer.comparison.ComparisonResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

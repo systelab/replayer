@@ -1,4 +1,4 @@
-package com.werfen.masterlist.replayer.config;
+package com.werfen.replayer.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

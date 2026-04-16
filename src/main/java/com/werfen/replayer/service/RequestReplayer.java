@@ -1,7 +1,7 @@
-package com.werfen.masterlist.replayer.service;
+package com.werfen.replayer.service;
 
-import com.werfen.masterlist.replayer.config.ReplayerProperties;
-import com.werfen.masterlist.replayer.model.CapturedRequest;
+import com.werfen.replayer.config.ReplayerProperties;
+import com.werfen.replayer.model.CapturedRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

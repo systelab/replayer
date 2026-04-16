@@ -1,11 +1,11 @@
-package com.werfen.masterlist.replayer.runner;
+package com.werfen.replayer.runner;
 
-import com.werfen.masterlist.replayer.comparison.ComparisonResult;
-import com.werfen.masterlist.replayer.model.CapturedExchange;
-import com.werfen.masterlist.replayer.report.ReportPrinter;
-import com.werfen.masterlist.replayer.service.ExchangeLoader;
-import com.werfen.masterlist.replayer.service.RequestReplayer;
-import com.werfen.masterlist.replayer.service.ResponseComparator;
+import com.werfen.replayer.comparison.ComparisonResult;
+import com.werfen.replayer.model.CapturedExchange;
+import com.werfen.replayer.report.ReportPrinter;
+import com.werfen.replayer.service.ExchangeLoader;
+import com.werfen.replayer.service.RequestReplayer;
+import com.werfen.replayer.service.ResponseComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

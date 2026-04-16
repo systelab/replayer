@@ -1,4 +1,4 @@
-package com.werfen.masterlist.replayer.comparison;
+package com.werfen.replayer.comparison;
 
 import org.json.JSONArray;
 import org.json.JSONException;

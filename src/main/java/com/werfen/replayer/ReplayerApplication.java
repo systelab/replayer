@@ -1,6 +1,6 @@
-package com.werfen.masterlist.replayer;
+package com.werfen.replayer;
 
-import com.werfen.masterlist.replayer.config.ReplayerProperties;
+import com.werfen.replayer.config.ReplayerProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

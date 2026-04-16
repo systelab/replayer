@@ -1,5 +1,6 @@
-package com.werfen.masterlist.replayer.comparison;
+package com.werfen.replayer.comparison;
 
+import com.werfen.replayer.comparison.XmlComparator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -1,12 +1,12 @@
-package com.werfen.masterlist.replayer.service;
+package com.werfen.replayer.service;
 
-import com.werfen.masterlist.replayer.comparison.ComparisonResult;
-import com.werfen.masterlist.replayer.comparison.JsonComparator;
-import com.werfen.masterlist.replayer.comparison.XmlComparator;
-import com.werfen.masterlist.replayer.config.ReplayerProperties;
-import com.werfen.masterlist.replayer.model.CapturedExchange;
-import com.werfen.masterlist.replayer.model.CapturedRequest;
-import com.werfen.masterlist.replayer.model.CapturedResponse;
+import com.werfen.replayer.comparison.ComparisonResult;
+import com.werfen.replayer.comparison.JsonComparator;
+import com.werfen.replayer.comparison.XmlComparator;
+import com.werfen.replayer.config.ReplayerProperties;
+import com.werfen.replayer.model.CapturedExchange;
+import com.werfen.replayer.model.CapturedRequest;
+import com.werfen.replayer.model.CapturedResponse;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

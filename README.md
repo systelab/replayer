@@ -55,7 +55,7 @@ Files are named `{timestamp}_{METHOD}_{uri-sanitized}.json` (e.g., `20260416_100
 ```xml
 <filter>
   <filter-name>RecordingFilter</filter-name>
-  <filter-class>com.werfen.masterlist.recorder.RecordingFilter</filter-class>
+  <filter-class>com.werfen.recorder.RecordingFilter</filter-class>
   <init-param>
     <param-name>outputDirectory</param-name>
     <param-value>/var/recordings</param-value>
