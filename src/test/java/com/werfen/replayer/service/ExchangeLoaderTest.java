@@ -45,10 +45,16 @@ class ExchangeLoaderTest {
         return new ExchangeLoader(mapper, props);
     }
 
+    private List<CapturedExchange> collect(ExchangeLoader loader) throws IOException {
+        try (var s = loader.stream()) {
+            return s.toList();
+        }
+    }
+
     @Test
     void loadsValidFiles() throws IOException {
         Files.writeString(tempDir.resolve("exchange1.json"), VALID_JSON);
-        List<CapturedExchange> result = loaderFor(tempDir.toString()).loadAll();
+        List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(1);
         assertThat(result.get(0).id()).isEqualTo("abc");
     }
@@ -57,7 +63,7 @@ class ExchangeLoaderTest {
     void sortsByCapturedAtAscending() throws IOException {
         Files.writeString(tempDir.resolve("newer.json"), VALID_JSON);  // 2026-04-16
         Files.writeString(tempDir.resolve("older.json"), OLDER_JSON);  // 2026-04-15
-        List<CapturedExchange> result = loaderFor(tempDir.toString()).loadAll();
+        List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo("old");
         assertThat(result.get(1).id()).isEqualTo("abc");
@@ -67,19 +73,19 @@ class ExchangeLoaderTest {
     void skipsMalformedFiles() throws IOException {
         Files.writeString(tempDir.resolve("good.json"), VALID_JSON);
         Files.writeString(tempDir.resolve("bad.json"), "not valid json {{{");
-        List<CapturedExchange> result = loaderFor(tempDir.toString()).loadAll();
+        List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(1);
     }
 
     @Test
     void handlesEmptyDirectory() throws IOException {
-        List<CapturedExchange> result = loaderFor(tempDir.toString()).loadAll();
+        List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).isEmpty();
     }
 
     @Test
     void throwsForNonexistentDirectory() {
-        assertThatThrownBy(() -> loaderFor("/does/not/exist").loadAll())
+        assertThatThrownBy(() -> loaderFor("/does/not/exist").stream())
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("not found");
     }
@@ -88,7 +94,7 @@ class ExchangeLoaderTest {
     void ignoresNonJsonFiles() throws IOException {
         Files.writeString(tempDir.resolve("exchange.json"), VALID_JSON);
         Files.writeString(tempDir.resolve("notes.txt"), "ignore me");
-        List<CapturedExchange> result = loaderFor(tempDir.toString()).loadAll();
+        List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(1);
     }
 }

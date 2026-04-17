@@ -61,10 +61,10 @@ class ReplayRunnerIntegrationTest {
                 new JsonComparator(), new XmlComparator(), props);
         ReportPrinter printer      = new ReportPrinter();
 
-        List<CapturedExchange> exchanges = loader.loadAll();
-        List<ComparisonResult> results   = new ArrayList<>();
-        for (CapturedExchange exchange : exchanges) {
-            results.add(cmp.compare(exchange, replayer.replay(exchange.request())));
+        List<ComparisonResult> results = new ArrayList<>();
+        try (var exchanges = loader.stream()) {
+            exchanges.forEach(exchange ->
+                    results.add(cmp.compare(exchange, replayer.replay(exchange.request()))));
         }
         printer.printSummary(results);
         return results;
@@ -177,7 +177,10 @@ class ReplayRunnerIntegrationTest {
         ExchangeLoader loader = new ExchangeLoader(
                 new ObjectMapper().registerModule(new JavaTimeModule()), props);
 
-        List<CapturedExchange> exchanges = loader.loadAll();
+        List<CapturedExchange> exchanges;
+        try (var s = loader.stream()) {
+            exchanges = s.toList();
+        }
         assertThat(exchanges).hasSize(2);
         assertThat(exchanges.get(0).id()).isEqualTo("first");
         assertThat(exchanges.get(1).id()).isEqualTo("second");

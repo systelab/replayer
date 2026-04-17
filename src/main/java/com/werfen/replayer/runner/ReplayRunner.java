@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class ReplayRunner implements CommandLineRunner {
@@ -36,27 +37,26 @@ public class ReplayRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        List<CapturedExchange> exchanges = loader.loadAll();
-        log.info("Loaded {} exchange(s). Starting replay...", exchanges.size());
+        List<ComparisonResult> results = new ArrayList<>();
 
-        List<ComparisonResult> results = new ArrayList<>(exchanges.size());
-
-        // Sequential: stateful APIs require capture order
-        for (CapturedExchange exchange : exchanges) {
-            log.info("Replaying [{} {}]",
-                    exchange.request().method(), exchange.request().uri());
-            RequestReplayer.ReplayedResponse actual = replayer.replay(exchange.request());
-            ComparisonResult result = comparator.compare(exchange, actual);
-            results.add(result);
-            if (!result.passed()) {
-                printer.printFailure(result);
-            }
+        // stream() reads one exchange at a time — supports large directories without OOM
+        try (Stream<CapturedExchange> exchanges = loader.stream()) {
+            exchanges.forEach(exchange -> {
+                log.info("Replaying [{} {}]",
+                        exchange.request().method(), exchange.request().uri());
+                RequestReplayer.ReplayedResponse actual = replayer.replay(exchange.request());
+                ComparisonResult result = comparator.compare(exchange, actual);
+                results.add(result);
+                if (!result.passed()) {
+                    printer.printFailure(result);
+                }
+            });
         }
 
+        log.info("Replayed {} exchange(s).", results.size());
         printer.printSummary(results);
 
-        boolean anyFailed = results.stream().anyMatch(r -> !r.passed());
-        if (anyFailed) {
+        if (results.stream().anyMatch(r -> !r.passed())) {
             System.exit(1);
         }
     }

@@ -1,5 +1,6 @@
 package com.werfen.replayer.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.werfen.replayer.config.ReplayerProperties;
 import com.werfen.replayer.model.CapturedExchange;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Service
 public class ExchangeLoader {
@@ -27,26 +30,39 @@ public class ExchangeLoader {
         this.properties = properties;
     }
 
-    /**
-     * Loads all {@code .json} files from the configured exchanges directory,
-     * sorted ascending by {@code capturedAt} to preserve replay order.
-     * Malformed files are logged and skipped.
-     */
-    public List<CapturedExchange> loadAll() throws IOException {
+    public Stream<CapturedExchange> stream() throws IOException {
         Path dir = Path.of(properties.exchangesDirectory());
-
         if (!Files.isDirectory(dir)) {
             throw new IOException("Exchanges directory not found or not a directory: " + dir.toAbsolutePath());
         }
 
-        try (var stream = Files.list(dir)) {
-            return stream
+        List<PathWithTimestamp> sorted;
+        try (var ls = Files.list(dir)) {
+            sorted = ls
                     .filter(p -> p.toString().endsWith(".json"))
-                    .map(this::parseQuietly)
+                    .map(this::readTimestamp)
                     .filter(Objects::nonNull)
-                    .sorted(Comparator.comparing(e -> e.capturedAt() != null ? e.capturedAt()
-                            : java.time.Instant.EPOCH))
+                    .sorted(Comparator.comparing(PathWithTimestamp::capturedAt))
                     .toList();
+        }
+
+        return sorted.stream()
+                .map(pwt -> parseQuietly(pwt.path()))
+                .filter(Objects::nonNull);
+    }
+
+    private record PathWithTimestamp(Path path, Instant capturedAt) {}
+
+    private PathWithTimestamp readTimestamp(Path file) {
+        try {
+            JsonNode node = objectMapper.readTree(file.toFile());
+            Instant ts = node.has("capturedAt") && !node.get("capturedAt").isNull()
+                    ? Instant.parse(node.get("capturedAt").asText())
+                    : Instant.EPOCH;
+            return new PathWithTimestamp(file, ts);
+        } catch (IOException e) {
+            log.warn("Skipping malformed exchange file {}: {}", file.getFileName(), e.getMessage());
+            return null;
         }
     }
 
