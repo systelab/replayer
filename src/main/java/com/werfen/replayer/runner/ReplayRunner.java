@@ -49,7 +49,7 @@ public class ReplayRunner implements CommandLineRunner {
                 var adjustedRequest = correlator.apply(exchange.request());
                 log.info("Replaying [{} {}]",
                     adjustedRequest.method(), adjustedRequest.uri());
-                RequestReplayer.ReplayedResponse actual = replayer.replay(exchange.request());
+                RequestReplayer.ReplayedResponse actual = replayer.replay(adjustedRequest);
                 correlator.learn(exchange.response().body(), actual.body());
                 ComparisonResult result = comparator.compare(exchange, actual);
             results.add(result);
