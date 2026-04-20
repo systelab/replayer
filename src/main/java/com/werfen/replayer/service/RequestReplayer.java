@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
+import java.util.Set;
 
 @Service
 public class RequestReplayer {
@@ -31,21 +32,29 @@ public class RequestReplayer {
         Duration timeout = Duration.ofSeconds(properties.requestTimeoutSeconds());
 
         var requestSpec = webClient
-                .method(HttpMethod.valueOf(request.method()))
-                .uri(fullUri);
+            .method(HttpMethod.valueOf(request.method()))
+            .uri(fullUri);
 
+        // Strip transport-level / hop-by-hop headers that must not be forwarded
+        Set<String> skipHeaders = Set.of(
+            "accept-encoding", "content-length", "host",
+            "transfer-encoding", "connection");
         if (request.headers() != null) {
-            request.headers().forEach(requestSpec::header);
+            request.headers().forEach((name, value) -> {
+                if (!skipHeaders.contains(name.toLowerCase())) {
+                    requestSpec.header(name, value);
+                }
+            });
         }
 
         var bodySpec = (request.body() != null && !request.body().isBlank())
-                ? requestSpec.bodyValue(request.body())
-                : requestSpec;
+            ? requestSpec.bodyValue(request.body())
+            : requestSpec;
 
         return bodySpec
-                .exchangeToMono(response -> response.bodyToMono(String.class)
-                        .defaultIfEmpty("")
-                        .map(body -> new ReplayedResponse(response.statusCode().value(), body)))
-                .block(timeout);
+            .exchangeToMono(response -> response.bodyToMono(String.class)
+                .defaultIfEmpty("")
+                .map(body -> new ReplayedResponse(response.statusCode().value(), body)))
+            .block(timeout);
     }
 }

@@ -1,4 +1,4 @@
-package com.werfen.masterlist.recorder;
+package com.werfen.recorder;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
