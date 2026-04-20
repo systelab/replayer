@@ -92,7 +92,9 @@ public class RecordingFilter implements Filter {
 
         chain.doFilter(wrappedReq, wrappedRes);
 
-        writeExchange(wrappedReq, wrappedRes);
+        if (!isSseRequest(httpReq)) {
+            writeExchange(wrappedReq, wrappedRes);
+        }
         wrappedRes.copyBodyToResponse();
     }
 
@@ -102,6 +104,11 @@ public class RecordingFilter implements Filter {
     // -------------------------------------------------------------------------
     // File writing
     // -------------------------------------------------------------------------
+
+    private boolean isSseRequest(HttpServletRequest req) {
+        String accept = req.getHeader("Accept");
+        return accept != null && accept.contains("text/event-stream");
+    }
 
     private void writeExchange(BufferingRequestWrapper req,
                                BufferingResponseWrapper res) throws IOException {
