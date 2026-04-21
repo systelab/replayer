@@ -52,7 +52,8 @@ class ReplayRunnerIntegrationTest {
                 dir.toString(),
                 ignoreFields,
                 10,
-                "auto");
+                "auto",
+                false);
 
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ExchangeLoader loader      = new ExchangeLoader(mapper, props);
@@ -63,8 +64,8 @@ class ReplayRunnerIntegrationTest {
 
         List<ComparisonResult> results = new ArrayList<>();
         try (var exchanges = loader.stream()) {
-            exchanges.forEach(exchange ->
-                    results.add(cmp.compare(exchange, replayer.replay(exchange.request()))));
+            exchanges.forEach(ewp ->
+                    results.add(cmp.compare(ewp.exchange(), replayer.replay(ewp.exchange().request()))));
         }
         printer.printSummary(results);
         return results;
@@ -173,13 +174,13 @@ class ReplayRunnerIntegrationTest {
                 """);
 
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost:" + wireMock.port(), dir.toString(), List.of(), 10, "auto");
+                "http://localhost:" + wireMock.port(), dir.toString(), List.of(), 10, "auto", false);
         ExchangeLoader loader = new ExchangeLoader(
                 new ObjectMapper().registerModule(new JavaTimeModule()), props);
 
         List<CapturedExchange> exchanges;
         try (var s = loader.stream()) {
-            exchanges = s.toList();
+            exchanges = s.map(ExchangeLoader.ExchangeWithPath::exchange).toList();
         }
         assertThat(exchanges).hasSize(2);
         assertThat(exchanges.get(0).id()).isEqualTo("first");

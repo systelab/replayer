@@ -23,7 +23,7 @@ class ResponseComparatorTest {
     private ResponseComparator comparatorWith(String contentTypeOverride,
                                               List<String> ignoreFields) {
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost", "./exchanges", ignoreFields, 30, contentTypeOverride);
+                "http://localhost", "./exchanges", ignoreFields, 30, contentTypeOverride, false);
         return new ResponseComparator(jsonCmp, xmlCmp, props);
     }
 

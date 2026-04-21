@@ -1,6 +1,6 @@
 # Replayer — HTTP Record & Replay Testing Suite
 
-Version: **1.0.0** | Java 21 | Spring Boot 3.4.4
+Version: **1.0.1** | Java 21 | Spring Boot 3.4.4
 
 A two-part tool for verifying that a refactored backend service produces identical responses to the original:
 
@@ -47,6 +47,7 @@ Files are named `{timestamp}_{METHOD}_{uri-sanitized}.json` (e.g., `20260416_100
 - Request: URI, HTTP method, all headers, request body
 - Response: HTTP status, all headers, response body
 - One JSON file per HTTP exchange, written atomically
+- **SSE subscriptions are skipped** — requests with `Accept: text/event-stream` are never recorded
 
 ### How to register the filter
 
@@ -125,7 +126,7 @@ Edit `src/main/resources/application.yml` (or pass as environment variables / co
 ```yaml
 replayer:
   target-base-url: http://localhost:8080   # URL of the refactored service
-  exchanges-directory: /var/recordings     # directory with captured JSON files
+  exchanges-directory: /var/recordings     # directory with captured JSON files (subfolders included)
   ignore-fields:                           # leaf field names to skip in comparison
     - id
     - createdAt
@@ -134,6 +135,7 @@ replayer:
     - correlationId
   request-timeout-seconds: 30
   content-type-detection: auto             # auto | json | xml
+  promote: false                           # true = overwrite expected response when comparison fails
 ```
 
 ### Configure the Ignore List
@@ -151,15 +153,30 @@ The `ignore-fields` list accepts any **leaf field name** (the last segment of a 
 
 ```bash
 # Using the fat JAR
-java -jar target/replayer-1.0.0.jar
+java -jar target/replayer-1.0.1.jar
 
 # Override config at runtime
-java -jar target/replayer-1.0.0.jar \
+java -jar target/replayer-1.0.1.jar \
   --replayer.target-base-url=http://staging.example.com \
   --replayer.exchanges-directory=/var/recordings
+
+# Promote mode — update expected responses that no longer match
+java -jar target/replayer-1.0.1.jar --replayer.promote=true
 ```
 
-The runner exits with **code 0** (all passed) or **code 1** (one or more failures) — suitable for CI/CD pipelines.
+The runner exits with **code 0** (all passed / all promoted) or **code 1** (one or more unpromoted failures) — suitable for CI/CD pipelines.
+
+### Exchanges directory
+
+The runner scans `exchanges-directory` **recursively**, including all subfolders at any depth. Files are sorted by the timestamp embedded in their filename (`yyyyMMdd_HHmmss_SSS` prefix) so execution order always matches recording order regardless of how the files are organised on disk.
+
+### Promote mode
+
+When `replayer.promote=true`, any exchange whose actual response differs from the expected response has its stored file **overwritten** with the actual response (status + body). This is useful for bulk-accepting a new baseline after intentional changes:
+
+1. Run with `--replayer.promote=true` to accept all current responses as the new expected values.
+2. Commit the updated exchange files.
+3. Run without `--replayer.promote` in CI to enforce the baseline.
 
 ### Sample output
 
@@ -237,5 +254,5 @@ docker compose up -d
 # generate traffic
 # stop the original service
 # start the refactored service
-java -jar target/replayer-1.0.0.jar
+java -jar target/replayer-1.0.1.jar
 ```

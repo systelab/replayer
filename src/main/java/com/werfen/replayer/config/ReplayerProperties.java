@@ -10,5 +10,6 @@ public record ReplayerProperties(
         String exchangesDirectory,
         List<String> ignoreFields,
         int requestTimeoutSeconds,
-        String contentTypeDetection
+        String contentTypeDetection,
+        boolean promote
 ) {}

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.werfen.replayer.config.ReplayerProperties;
 import com.werfen.replayer.model.CapturedExchange;
+import com.werfen.replayer.service.ExchangeLoader.ExchangeWithPath;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -41,13 +42,13 @@ class ExchangeLoaderTest {
     private ExchangeLoader loaderFor(String directory) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost:8080", directory, List.of(), 30, "auto");
+                "http://localhost:8080", directory, List.of(), 30, "auto", false);
         return new ExchangeLoader(mapper, props);
     }
 
     private List<CapturedExchange> collect(ExchangeLoader loader) throws IOException {
         try (var s = loader.stream()) {
-            return s.toList();
+            return s.map(ExchangeWithPath::exchange).toList();
         }
     }
 
@@ -61,8 +62,8 @@ class ExchangeLoaderTest {
 
     @Test
     void sortsByCapturedAtAscending() throws IOException {
-        Files.writeString(tempDir.resolve("newer.json"), VALID_JSON);  // 2026-04-16
-        Files.writeString(tempDir.resolve("older.json"), OLDER_JSON);  // 2026-04-15
+        Files.writeString(tempDir.resolve("20260416_100000_000_GET_api_test.json"), VALID_JSON);  // 2026-04-16
+        Files.writeString(tempDir.resolve("20260415_080000_000_GET_api_old.json"), OLDER_JSON);  // 2026-04-15
         List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo("old");

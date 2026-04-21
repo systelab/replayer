@@ -1,6 +1,6 @@
 replayer:
   # Base URL of the system under test (refactored service)
-  target-base-url: http://localhost:8080
+  target-base-url: https://restcountries.com
   # Directory containing captured exchange JSON files
   exchanges-directory: ./exchanges
   # Fields excluded from JSON response comparison (matched by leaf key at any depth)
@@ -14,6 +14,7 @@ replayer:
   request-timeout-seconds: 30
   # Content-type detection strategy: "auto" | "json" | "xml"
   content-type-detection: auto
+  promote: false
 
 spring:
   main:
