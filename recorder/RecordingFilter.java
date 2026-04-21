@@ -114,7 +114,8 @@ public class RecordingFilter implements Filter {
                                BufferingResponseWrapper res) throws IOException {
         String timestamp  = FILENAME_FMT.format(LocalDateTime.now());
         String method     = req.getMethod();
-        String sanitized  = req.getRequestURI().replaceAll("[^a-zA-Z0-9_\\-]", "_");
+        String requestUri = buildRequestUri(req);
+        String sanitized  = requestUri.replaceAll("[^a-zA-Z0-9_\\-]", "_");
         String filename   = timestamp + "_" + method + "_" + sanitized + ".json";
 
         String json = buildJson(req, res);
@@ -127,6 +128,7 @@ public class RecordingFilter implements Filter {
     }
 
     private String buildJson(BufferingRequestWrapper req, BufferingResponseWrapper res) {
+        String requestUri = buildRequestUri(req);
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         sb.append("  \"id\": \"").append(UUID.randomUUID()).append("\",\n");
@@ -134,7 +136,7 @@ public class RecordingFilter implements Filter {
 
         // request
         sb.append("  \"request\": {\n");
-        sb.append("    \"uri\": \"").append(escapeJson(req.getRequestURI())).append("\",\n");
+        sb.append("    \"uri\": \"").append(escapeJson(requestUri)).append("\",\n");
         sb.append("    \"method\": \"").append(escapeJson(req.getMethod())).append("\",\n");
         sb.append("    \"headers\": ").append(headersToJson(req)).append(",\n");
         sb.append("    \"body\": \"").append(escapeJson(req.getBodyAsString())).append("\"\n");
@@ -149,6 +151,15 @@ public class RecordingFilter implements Filter {
 
         sb.append("}\n");
         return sb.toString();
+    }
+
+    private String buildRequestUri(HttpServletRequest req) {
+        String uri = req.getRequestURI();
+        String query = req.getQueryString();
+        if (query == null || query.isBlank()) {
+            return uri;
+        }
+        return uri + "?" + query;
     }
 
     private String headersToJson(HttpServletRequest req) {
