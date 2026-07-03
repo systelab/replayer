@@ -63,21 +63,37 @@ public class RecordingFilter implements Filter {
     private static final DateTimeFormatter FILENAME_FMT =
             DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
+    private static final String DURATION_HEADER = "X-Replay-Duration-Millis";
+
     private String outputDirectory;
+    private boolean recordToFiles;
 
     @Override
     public void init(FilterConfig config) throws ServletException {
+        recordToFiles = readBoolean(config, "recordToFiles", "recorder.recordToFiles", true);
+
         outputDirectory = config.getInitParameter("outputDirectory");
         if (outputDirectory == null || outputDirectory.isBlank()) {
             outputDirectory = System.getProperty("recorder.outputDirectory",
                     System.getProperty("java.io.tmpdir") + "/recordings");
         }
-        try {
-            Files.createDirectories(Path.of(outputDirectory));
-        } catch (IOException e) {
-            throw new ServletException(
-                    "Cannot create recording directory: " + outputDirectory, e);
+        if (recordToFiles) {
+            try {
+                Files.createDirectories(Path.of(outputDirectory));
+            } catch (IOException e) {
+                throw new ServletException(
+                        "Cannot create recording directory: " + outputDirectory, e);
+            }
         }
+    }
+
+    private static boolean readBoolean(FilterConfig config, String initParam,
+                                       String sysProp, boolean defaultValue) {
+        String v = config.getInitParameter(initParam);
+        if (v == null || v.isBlank()) {
+            v = System.getProperty(sysProp);
+        }
+        return (v == null || v.isBlank()) ? defaultValue : Boolean.parseBoolean(v);
     }
 
     @Override
@@ -90,11 +106,14 @@ public class RecordingFilter implements Filter {
         BufferingRequestWrapper  wrappedReq = new BufferingRequestWrapper(httpReq);
         BufferingResponseWrapper wrappedRes = new BufferingResponseWrapper(httpRes);
 
+        long startNanos = System.nanoTime();
         chain.doFilter(wrappedReq, wrappedRes);
+        long durationMillis = (System.nanoTime() - startNanos) / 1_000_000;
 
-        if (!isSseRequest(httpReq)) {
-            writeExchange(wrappedReq, wrappedRes);
+        if (recordToFiles && !isSseRequest(httpReq)) {
+            writeExchange(wrappedReq, wrappedRes, durationMillis);
         }
+        httpRes.setHeader(DURATION_HEADER, Long.toString(durationMillis));
         wrappedRes.copyBodyToResponse();
     }
 
@@ -111,14 +130,15 @@ public class RecordingFilter implements Filter {
     }
 
     private void writeExchange(BufferingRequestWrapper req,
-                               BufferingResponseWrapper res) throws IOException {
+                               BufferingResponseWrapper res,
+                               long durationMillis) throws IOException {
         String timestamp  = FILENAME_FMT.format(LocalDateTime.now());
         String method     = req.getMethod();
         String requestUri = buildRequestUri(req);
         String sanitized  = requestUri.replaceAll("[^a-zA-Z0-9_\\-]", "_");
         String filename   = timestamp + "_" + method + "_" + sanitized + ".json";
 
-        String json = buildJson(req, res);
+        String json = buildJson(req, res, durationMillis);
         Files.writeString(
                 Path.of(outputDirectory, filename),
                 json,
@@ -127,7 +147,7 @@ public class RecordingFilter implements Filter {
                 StandardOpenOption.WRITE);
     }
 
-    private String buildJson(BufferingRequestWrapper req, BufferingResponseWrapper res) {
+    private String buildJson(BufferingRequestWrapper req, BufferingResponseWrapper res, long durationMillis) {
         String requestUri = buildRequestUri(req);
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
@@ -146,7 +166,8 @@ public class RecordingFilter implements Filter {
         sb.append("  \"response\": {\n");
         sb.append("    \"status\": ").append(res.getStatus()).append(",\n");
         sb.append("    \"headers\": ").append(responseHeadersToJson(res)).append(",\n");
-        sb.append("    \"body\": \"").append(escapeJson(res.getBodyAsString())).append("\"\n");
+        sb.append("    \"body\": \"").append(escapeJson(res.getBodyAsString())).append("\",\n");
+        sb.append("    \"durationMillis\": ").append(durationMillis).append("\n");
         sb.append("  }\n");
 
         sb.append("}\n");

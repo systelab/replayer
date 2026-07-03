@@ -15,6 +15,7 @@ replayer:
   # Content-type detection strategy: "auto" | "json" | "xml"
   content-type-detection: auto
   promote: false
+  report-timing: false
 
 spring:
   main:
