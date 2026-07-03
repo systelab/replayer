@@ -9,14 +9,8 @@ public record ComparisonResult(
         int expectedStatus,
         int actualStatus,
         List<String> diffs,
-        // Recorded round-trip time (null if the exchange predates duration recording)
-        // and the time attributed to the replay, both in milliseconds. Informational
-        // only: timing never affects the pass/fail verdict.
         Long recordedDurationMillis,
         long replayedDurationMillis,
-        // True when replayedDurationMillis is the target's server-internal time (reported
-        // via the X-Replay-Duration-Millis header) — comparable with the recorded time.
-        // False when it is the client round-trip fallback (network/TLS included).
         boolean replayedIsServerTiming
 ) {
 

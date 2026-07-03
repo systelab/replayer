@@ -35,9 +35,6 @@ public class ReportPrinter {
     private String formatTiming(ComparisonResult result) {
         long replayed = result.replayedDurationMillis();
         Long recorded = result.recordedDurationMillis();
-        // The recorded time is the original server's internal processing time. It is only
-        // comparable when the replayed value is also server-internal (from the header);
-        // otherwise flag it so the +diff isn't read as a real slowdown.
         String note = result.replayedIsServerTiming()
                 ? ""
                 : " (round-trip; deploy RecordingFilter on target for server timing)";

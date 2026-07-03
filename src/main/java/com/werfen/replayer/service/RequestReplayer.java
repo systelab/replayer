@@ -20,15 +20,8 @@ public class RequestReplayer {
         this.properties = properties;
     }
 
-    /** Response header emitted by the recorder's filter carrying the server-internal time (ms). */
     private static final String DURATION_HEADER = "X-Replay-Duration-Millis";
 
-    /**
-     * @param durationMillis       client-observed round-trip time (always measured)
-     * @param serverDurationMillis server-internal time reported by the target via
-     *                             {@code X-Replay-Duration-Millis}, or null if the target
-     *                             did not send the header
-     */
     public record ReplayedResponse(int statusCode, String body,
                                    long durationMillis, Long serverDurationMillis) {}
 

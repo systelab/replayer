@@ -54,14 +54,6 @@ import java.util.UUID;
  * <p>If {@code outputDirectory} init-param is absent, falls back to the
  * {@code recorder.outputDirectory} system property, then to {@code <tmpdir>/recordings}.
  *
- * <h2>Timing header (for replay)</h2>
- * Every response gets an {@code X-Replay-Duration-Millis} header with the server-internal
- * processing time measured around the filter chain. Deploy this same filter on the
- * <em>refactored</em> service during replay with {@code recordToFiles=false} (init-param or
- * {@code -Drecorder.recordToFiles=false}) so it emits the header without writing exchange
- * files; the replayer then compares server time vs. server time instead of its own
- * network-inclusive round-trip.
- *
  * <h2>Legacy javax.servlet note</h2>
  * If your target application uses {@code javax.servlet} instead of {@code jakarta.servlet},
  * replace all {@code jakarta.servlet} imports with {@code javax.servlet} equivalents.
@@ -71,11 +63,6 @@ public class RecordingFilter implements Filter {
     private static final DateTimeFormatter FILENAME_FMT =
             DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
-    /**
-     * Response header carrying the server-internal processing time (ms) the filter
-     * measured around the chain. Must match the constant of the same value in the
-     * replayer's {@code RequestReplayer} so it can compare like-for-like.
-     */
     private static final String DURATION_HEADER = "X-Replay-Duration-Millis";
 
     private String outputDirectory;
@@ -83,9 +70,6 @@ public class RecordingFilter implements Filter {
 
     @Override
     public void init(FilterConfig config) throws ServletException {
-        // Deploy on the ORIGINAL service with recordToFiles=true (default) to capture
-        // exchanges. Deploy on the REFACTORED service with recordToFiles=false to emit
-        // only the timing header during replay (no exchange files written).
         recordToFiles = readBoolean(config, "recordToFiles", "recorder.recordToFiles", true);
 
         outputDirectory = config.getInitParameter("outputDirectory");
@@ -129,10 +113,6 @@ public class RecordingFilter implements Filter {
         if (recordToFiles && !isSseRequest(httpReq)) {
             writeExchange(wrappedReq, wrappedRes, durationMillis);
         }
-        // Expose the server-internal processing time so the replayer can compare
-        // like-for-like; its own client round-trip would otherwise include network,
-        // connection and TLS overhead the recorder never measured. Set before the
-        // buffered body is flushed, while the response is still uncommitted.
         httpRes.setHeader(DURATION_HEADER, Long.toString(durationMillis));
         wrappedRes.copyBodyToResponse();
     }

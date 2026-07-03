@@ -54,8 +54,6 @@ public class ResponseComparator {
         diffs.addAll(bodyDiffs);
 
         Long recordedDuration = exchange.response().durationMillis();
-        // Prefer the target's server-internal time (header) so we compare like-for-like
-        // with the recorded server time; fall back to the client round-trip otherwise.
         Long serverDuration = actual.serverDurationMillis();
         boolean serverTiming = serverDuration != null;
         long replayedDuration = serverTiming ? serverDuration : actual.durationMillis();
