@@ -53,10 +53,19 @@ public class ResponseComparator {
 
         diffs.addAll(bodyDiffs);
 
+        Long recordedDuration = exchange.response().durationMillis();
+        // Prefer the target's server-internal time (header) so we compare like-for-like
+        // with the recorded server time; fall back to the client round-trip otherwise.
+        Long serverDuration = actual.serverDurationMillis();
+        boolean serverTiming = serverDuration != null;
+        long replayedDuration = serverTiming ? serverDuration : actual.durationMillis();
+
         if (diffs.isEmpty()) {
-            return ComparisonResult.pass(url, method, actualStatus);
+            return ComparisonResult.pass(url, method, actualStatus,
+                    recordedDuration, replayedDuration, serverTiming);
         }
-        return ComparisonResult.fail(url, method, expectedStatus, actualStatus, diffs);
+        return ComparisonResult.fail(url, method, expectedStatus, actualStatus, diffs,
+                recordedDuration, replayedDuration, serverTiming);
     }
 
     private ContentType detectContentType(CapturedExchange exchange,

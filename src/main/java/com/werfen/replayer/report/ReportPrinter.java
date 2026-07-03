@@ -23,6 +23,42 @@ public class ReportPrinter {
         }
     }
 
+    public void printTiming(ComparisonResult result) {
+        if (result.passed()) {
+            log.info("PASS  [{} {}]  Time : {}",
+                    result.method(), result.url(), formatTiming(result));
+        } else {
+            log.error("      Time   : {}", formatTiming(result));
+        }
+    }
+
+    private String formatTiming(ComparisonResult result) {
+        long replayed = result.replayedDurationMillis();
+        Long recorded = result.recordedDurationMillis();
+        // The recorded time is the original server's internal processing time. It is only
+        // comparable when the replayed value is also server-internal (from the header);
+        // otherwise flag it so the +diff isn't read as a real slowdown.
+        String note = result.replayedIsServerTiming()
+                ? ""
+                : " (round-trip; deploy RecordingFilter on target for server timing)";
+        if (recorded == null) {
+            return "replayed=" + formatDuration(replayed) + " (no recorded time in exchange)" + note;
+        }
+        long diff = replayed - recorded;
+        String sign = diff >= 0 ? "+" : "-";
+        return "recorded=" + formatDuration(recorded)
+                + " replayed=" + formatDuration(replayed)
+                + " diff=" + sign + formatDuration(Math.abs(diff))
+                + note;
+    }
+
+    private static String formatDuration(long millis) {
+        if (Math.abs(millis) < 1000) {
+            return millis + " ms";
+        }
+        return String.format("%.2f s", millis / 1000.0);
+    }
+
     public void printSummary(List<ComparisonResult> results) {
         long passed = results.stream().filter(ComparisonResult::passed).count();
         long failed = results.size() - passed;

@@ -23,7 +23,7 @@ class ResponseComparatorTest {
     private ResponseComparator comparatorWith(String contentTypeOverride,
                                               List<String> ignoreFields) {
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost", "./exchanges", ignoreFields, 30, contentTypeOverride, false);
+                "http://localhost", "./exchanges", ignoreFields, 30, contentTypeOverride, false, true);
         return new ResponseComparator(jsonCmp, xmlCmp, props);
     }
 
@@ -32,12 +32,12 @@ class ResponseComparatorTest {
                 ? Map.of("Content-Type", contentType)
                 : Map.of();
         CapturedRequest req = new CapturedRequest("/api/test", "GET", Map.of(), null);
-        CapturedResponse res = new CapturedResponse(status, headers, body);
+        CapturedResponse res = new CapturedResponse(status, headers, body, 100L);
         return new CapturedExchange("id", Instant.now(), req, res);
     }
 
     private RequestReplayer.ReplayedResponse actual(int status, String body) {
-        return new RequestReplayer.ReplayedResponse(status, body);
+        return new RequestReplayer.ReplayedResponse(status, body, 120L, 110L);
     }
 
     // -----------------------------------------------------------------------

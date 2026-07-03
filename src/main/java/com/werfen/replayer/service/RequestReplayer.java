@@ -20,7 +20,17 @@ public class RequestReplayer {
         this.properties = properties;
     }
 
-    public record ReplayedResponse(int statusCode, String body) {}
+    /** Response header emitted by the recorder's filter carrying the server-internal time (ms). */
+    private static final String DURATION_HEADER = "X-Replay-Duration-Millis";
+
+    /**
+     * @param durationMillis       client-observed round-trip time (always measured)
+     * @param serverDurationMillis server-internal time reported by the target via
+     *                             {@code X-Replay-Duration-Millis}, or null if the target
+     *                             did not send the header
+     */
+    public record ReplayedResponse(int statusCode, String body,
+                                   long durationMillis, Long serverDurationMillis) {}
 
     /**
      * Sends the captured request to the target base URL and returns the actual response.
@@ -51,10 +61,31 @@ public class RequestReplayer {
             ? requestSpec.bodyValue(request.body())
             : requestSpec;
 
-        return bodySpec
-            .exchangeToMono(response -> response.bodyToMono(String.class)
-                .defaultIfEmpty("")
-                .map(body -> new ReplayedResponse(response.statusCode().value(), body)))
+        long startNanos = System.nanoTime();
+        ReplayedResponse received = bodySpec
+            .exchangeToMono(response -> {
+                Long serverMillis = parseServerDuration(
+                    response.headers().asHttpHeaders().getFirst(DURATION_HEADER));
+                return response.bodyToMono(String.class)
+                    .defaultIfEmpty("")
+                    .map(body -> new ReplayedResponse(
+                        response.statusCode().value(), body, 0L, serverMillis));
+            })
             .block(timeout);
+        long durationMillis = (System.nanoTime() - startNanos) / 1_000_000;
+
+        return new ReplayedResponse(received.statusCode(), received.body(),
+            durationMillis, received.serverDurationMillis());
+    }
+
+    private static Long parseServerDuration(String headerValue) {
+        if (headerValue == null || headerValue.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(headerValue.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

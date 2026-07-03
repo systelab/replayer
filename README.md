@@ -1,6 +1,6 @@
 # Replayer — HTTP Record & Replay Testing Suite
 
-Version: **1.0.1** | Java 21 | Spring Boot 3.4.4
+Version: **1.1.0** | Java 21 | Spring Boot 3.4.4
 
 A two-part tool for verifying that a refactored backend service produces identical responses to the original:
 
@@ -31,10 +31,13 @@ Each recorded exchange is stored as a single JSON file:
     "headers": {
       "Content-Type": "application/json"
     },
-    "body": "{\"id\":\"123\",\"status\":\"CONFIRMED\",...}"
+    "body": "{\"id\":\"123\",\"status\":\"CONFIRMED\",...}",
+    "durationMillis": 142
   }
 }
 ```
+
+`response.durationMillis` is the **server-internal** processing time the recorder measured around the filter chain (from dispatch to the fully-generated response) — it excludes network, connection and TLS overhead. It is optional: exchanges captured before this field existed still load correctly.
 
 Files are named `{timestamp}_{METHOD}_{uri-sanitized}.json` (e.g., `20260416_100000_123_GET__api_v1_orders_123.json`).
 
@@ -46,6 +49,7 @@ Files are named `{timestamp}_{METHOD}_{uri-sanitized}.json` (e.g., `20260416_100
 
 - Request: URI, HTTP method, all headers, request body
 - Response: HTTP status, all headers, response body
+- Server-internal processing time of the call, in milliseconds (`response.durationMillis`), also emitted on every response as the `X-Replay-Duration-Millis` header
 - One JSON file per HTTP exchange, written atomically
 - **SSE subscriptions are skipped** — requests with `Accept: text/event-stream` are never recorded
 
@@ -136,6 +140,7 @@ replayer:
   request-timeout-seconds: 30
   content-type-detection: auto             # auto | json | xml
   promote: false                           # true = overwrite expected response when comparison fails
+  report-timing: false                     # true = report recorded-vs-replayed processing time per exchange (see Timing comparison)
 ```
 
 ### Configure the Ignore List
@@ -178,6 +183,34 @@ When `replayer.promote=true`, any exchange whose actual response differs from th
 2. Commit the updated exchange files.
 3. Run without `--replayer.promote` in CI to enforce the baseline.
 
+### Timing comparison
+
+**Off by default.** Enable with `report-timing: true` (or `--replayer.report-timing=true`). When enabled, each replayed exchange reports the recorded processing time against the replay's:
+
+```
+recorded=120 ms replayed=132 ms diff=+12 ms
+```
+
+Each value is shown in **milliseconds** when under a second and in **seconds** (two decimals) otherwise, and the difference carries a `+`/`-` sign (replayed minus recorded).
+
+#### Comparing like-for-like (important)
+
+The recorded time is the original service's **server-internal** time. For the comparison to be meaningful, the replayer must measure the refactored service the same way — otherwise it can only time its own **client round-trip**, which includes network, connection and TLS overhead and is therefore **always higher** for fast calls (typically by a fixed ~50–100 ms floor). That gap is measurement scope, not a real slowdown.
+
+To get a true server-vs-server comparison, **deploy the `RecordingFilter` on the refactored (target) service** in header-only mode — it will emit `X-Replay-Duration-Millis` without writing any files:
+
+```bash
+# On the refactored service being replayed against:
+java -Drecorder.recordToFiles=false -jar refactored-service.jar
+```
+
+or, via `web.xml` / programmatic registration, set the `recordToFiles` init-param to `false`.
+
+- **Header present** → the replayer uses the target's server-internal time; `diff` reflects a real processing-time change.
+- **Header absent** → the replayer falls back to its client round-trip and flags the line: `... (round-trip; deploy RecordingFilter on target for server timing)`.
+
+Timing is **informational only** — it never affects the pass/fail verdict. With `report-timing` off (the default), passing exchanges produce no per-exchange output.
+
 ### Sample output
 
 ```
@@ -187,6 +220,8 @@ When `replayer.promote=true`, any exchange whose actual response differs from th
 10:05:01.389 ERROR c.w.m.r.report.ReportPrinter -       Diff   : orders[0].status
                                                                    Expected: CONFIRMED
                                                                    Got: PENDING
+10:05:01.390 ERROR c.w.m.r.report.ReportPrinter -       Time   : recorded=95 ms replayed=101 ms diff=+6 ms
+10:05:01.450 INFO  c.w.m.r.report.ReportPrinter - PASS  [GET /api/v1/orders/456]  Time : recorded=88 ms replayed=92 ms diff=+4 ms
 10:05:02.100 INFO  c.w.m.r.report.ReportPrinter - =================================================
 10:05:02.100 INFO  c.w.m.r.report.ReportPrinter -   Replay summary: 41 passed, 1 failed (total 42)
 10:05:02.100 ERROR c.w.m.r.report.ReportPrinter -   Result: 1 FAILURE(S) DETECTED

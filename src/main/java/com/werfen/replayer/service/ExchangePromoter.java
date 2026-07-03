@@ -23,10 +23,16 @@ public class ExchangePromoter {
 
     public void promote(ExchangeLoader.ExchangeWithPath ewp, RequestReplayer.ReplayedResponse actual) {
         CapturedExchange original = ewp.exchange();
+        // Keep the promoted baseline's duration server-internal (matching how the recorder
+        // captures it) when the target reported it; fall back to the client round-trip.
+        Long duration = actual.serverDurationMillis() != null
+                ? actual.serverDurationMillis()
+                : actual.durationMillis();
         CapturedResponse promoted = new CapturedResponse(
                 actual.statusCode(),
                 original.response().headers(),
-                actual.body()
+                actual.body(),
+                duration
         );
         CapturedExchange updated = new CapturedExchange(
                 original.id(),
