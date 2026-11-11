@@ -23,10 +23,14 @@ public class ExchangePromoter {
 
     public void promote(ExchangeLoader.ExchangeWithPath ewp, RequestReplayer.ReplayedResponse actual) {
         CapturedExchange original = ewp.exchange();
+        Long duration = actual.serverDurationMillis() != null
+                ? actual.serverDurationMillis()
+                : actual.durationMillis();
         CapturedResponse promoted = new CapturedResponse(
                 actual.statusCode(),
                 original.response().headers(),
-                actual.body()
+                actual.body(),
+                duration
         );
         CapturedExchange updated = new CapturedExchange(
                 original.id(),

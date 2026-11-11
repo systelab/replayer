@@ -67,6 +67,9 @@ public class ReplayRunner implements CommandLineRunner {
                     if (!result.passed()) {
                         printer.printFailure(result);
                     }
+                    if (properties.reportTiming()) {
+                        printer.printTiming(result);
+                    }
                     results.add(result);
                 }
             }

@@ -1,6 +1,7 @@
 package com.werfen.replayer.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.util.List;
 
@@ -11,5 +12,6 @@ public record ReplayerProperties(
         List<String> ignoreFields,
         int requestTimeoutSeconds,
         String contentTypeDetection,
-        boolean promote
+        boolean promote,
+        @DefaultValue("false") boolean reportTiming
 ) {}

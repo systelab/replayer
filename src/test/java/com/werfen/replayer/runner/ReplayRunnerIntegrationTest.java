@@ -53,7 +53,8 @@ class ReplayRunnerIntegrationTest {
                 ignoreFields,
                 10,
                 "auto",
-                false);
+                false,
+                true);
 
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ExchangeLoader loader      = new ExchangeLoader(mapper, props);
@@ -143,7 +144,7 @@ class ReplayRunnerIntegrationTest {
 
         List<ComparisonResult> results = runReplay(dir, List.of());
         assertThat(results).hasSize(1);
-        ComparisonResult r = results.get(0);
+        ComparisonResult r = results.getFirst();
         assertThat(r.passed()).isFalse();
         assertThat(r.expectedStatus()).isEqualTo(200);
         assertThat(r.actualStatus()).isEqualTo(500);
@@ -174,7 +175,7 @@ class ReplayRunnerIntegrationTest {
                 """);
 
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost:" + wireMock.port(), dir.toString(), List.of(), 10, "auto", false);
+                "http://localhost:" + wireMock.port(), dir.toString(), List.of(), 10, "auto", false, true);
         ExchangeLoader loader = new ExchangeLoader(
                 new ObjectMapper().registerModule(new JavaTimeModule()), props);
 

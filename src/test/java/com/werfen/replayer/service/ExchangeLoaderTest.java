@@ -42,7 +42,7 @@ class ExchangeLoaderTest {
     private ExchangeLoader loaderFor(String directory) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ReplayerProperties props = new ReplayerProperties(
-                "http://localhost:8080", directory, List.of(), 30, "auto", false);
+                "http://localhost:8080", directory, List.of(), 30, "auto", false, true);
         return new ExchangeLoader(mapper, props);
     }
 
@@ -57,7 +57,7 @@ class ExchangeLoaderTest {
         Files.writeString(tempDir.resolve("exchange1.json"), VALID_JSON);
         List<CapturedExchange> result = collect(loaderFor(tempDir.toString()));
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo("abc");
+        assertThat(result.getFirst().id()).isEqualTo("abc");
     }
 
     @Test
